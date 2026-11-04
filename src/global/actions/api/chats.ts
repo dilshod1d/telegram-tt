@@ -24,6 +24,7 @@ import {
   DEBUG,
   GLOBAL_SUGGESTED_CHANNELS_ID,
   MAX_INT_32,
+  PEOPLE_FOLDER_ID,
   RE_TG_LINK,
   SAVED_FOLDER_ID,
   SERVICE_NOTIFICATIONS_USER_ID,
@@ -2051,6 +2052,8 @@ addActionHandler('setActiveChatFolder', (global, actions, payload): ActionReturn
 
   return updateTabState(global, {
     activeChatFolder,
+    activeChatFolderId: activeChatFolder === PEOPLE_FOLDER_ID
+      ? PEOPLE_FOLDER_ID : global.chatFolders.orderedIds?.[activeChatFolder] ?? ALL_FOLDER_ID,
   }, tabId);
 });
 

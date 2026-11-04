@@ -1085,6 +1085,9 @@
 "Chats" = "Chats";
 "FilterBots" = "Bots";
 "FilterContacts" = "Contacts";
+"FilterPeople" = "People";
+"FilterPeopleEmptyTitle" = "No conversations yet";
+"FilterPeopleEmptyText" = "Your conversations with people will appear here.";
 "FilterNonContacts" = "Non-Contacts";
 "FromYou" = "You";
 "InDlgAlbum" = "Album";

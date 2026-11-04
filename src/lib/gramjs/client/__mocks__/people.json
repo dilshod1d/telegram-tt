@@ -1,0 +1,187 @@
+{
+    "users": [
+        {
+            "id": "1",
+            "self": true,
+            "firstName": "Test",
+            "lastName": "Account"
+        },
+        {
+            "id": "11",
+            "firstName": "Alice",
+            "lastName": "Contact",
+            "contact": true
+        },
+        {
+            "id": "12",
+            "firstName": "Bob",
+            "lastName": "Stranger"
+        },
+        {
+            "id": "13",
+            "firstName": "Robot",
+            "lastName": "Bot",
+            "bot": true,
+            "botInfoVersion": 1
+        },
+        {
+            "id": "14",
+            "firstName": "Archived",
+            "lastName": "Person"
+        },
+        {
+            "id": "777000",
+            "firstName": "Telegram",
+            "lastName": "Service"
+        },
+        {
+            "id": "18",
+            "firstName": "Support",
+            "lastName": "Account",
+            "support": true
+        }
+    ],
+    "chats": [
+        {
+            "id": "15",
+            "title": "Test Group"
+        }
+    ],
+    "channels": [
+        {
+            "id": "16",
+            "title": "Test Channel",
+            "broadcast": true
+        }
+    ],
+    "dialogs": {
+        "active": [
+            {
+                "id": "15",
+                "topMessage": 15,
+                "unreadCount": 1,
+                "pinned": true
+            },
+            {
+                "id": "11",
+                "topMessage": 11,
+                "unreadCount": 1,
+                "pinned": true
+            },
+            {
+                "id": "16",
+                "topMessage": 16,
+                "unreadCount": 1
+            },
+            {
+                "id": "777000",
+                "topMessage": 777000,
+                "unreadCount": 0
+            },
+            {
+                "id": "13",
+                "topMessage": 13,
+                "unreadCount": 1
+            },
+            {
+                "id": "12",
+                "topMessage": 12,
+                "unreadCount": 1,
+                "notifySettings": {
+                    "muteUntil": 2147483647
+                }
+            },
+            {
+                "id": "1",
+                "topMessage": 1,
+                "unreadCount": 0
+            },
+            {
+                "id": "18",
+                "topMessage": 18,
+                "unreadCount": 0
+            }
+        ],
+        "archived": [
+            {
+                "id": "14",
+                "topMessage": 14,
+                "unreadCount": 1
+            }
+        ]
+    },
+    "messages": {
+        "1": [
+            {
+                "id": 1,
+                "date": 1730000001,
+                "message": "Message from 1",
+                "entities": []
+            }
+        ],
+        "11": [
+            {
+                "id": 11,
+                "date": 1730000011,
+                "message": "Message from 11",
+                "entities": []
+            }
+        ],
+        "12": [
+            {
+                "id": 12,
+                "date": 1730000012,
+                "message": "Message from 12",
+                "entities": []
+            }
+        ],
+        "13": [
+            {
+                "id": 13,
+                "date": 1730000013,
+                "message": "Message from 13",
+                "entities": []
+            }
+        ],
+        "14": [
+            {
+                "id": 14,
+                "date": 1730000014,
+                "message": "Message from 14",
+                "entities": []
+            }
+        ],
+        "15": [
+            {
+                "id": 15,
+                "date": 1730000015,
+                "message": "Message from 15",
+                "entities": []
+            }
+        ],
+        "16": [
+            {
+                "id": 16,
+                "date": 1730000016,
+                "message": "Message from 16",
+                "entities": []
+            }
+        ],
+        "18": [
+            {
+                "id": 18,
+                "date": 1730000018,
+                "message": "Message from 18",
+                "entities": []
+            }
+        ],
+        "777000": [
+            {
+                "id": 777000,
+                "date": 1730777000,
+                "message": "Message from 777000",
+                "entities": []
+            }
+        ]
+    }
+}

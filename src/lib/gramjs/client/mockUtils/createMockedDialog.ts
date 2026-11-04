@@ -15,6 +15,9 @@ export default function createMockedDialog(id: string, mockData: MockTypes): Api
         readOutboxMaxId = 0,
         unreadCount = 0,
         topMessage = 0,
+        pinned,
+        unreadMark,
+        notifySettings,
     } = dialog;
 
     return new Api.Dialog({
@@ -25,6 +28,9 @@ export default function createMockedDialog(id: string, mockData: MockTypes): Api
         unreadCount,
         unreadMentionsCount,
         unreadReactionsCount,
-        notifySettings: new Api.PeerNotifySettings({}),
+        pinned,
+        unreadMark,
+        folderId: mockData.dialogs.archived.includes(dialog) ? 1 : undefined,
+        notifySettings: new Api.PeerNotifySettings(notifySettings || {}),
     });
 }

@@ -18,6 +18,7 @@ import Button from '../../ui/Button';
 import styles from './EmptyFolder.module.scss';
 
 type OwnProps = {
+  isPeople?: boolean;
   folderId?: number;
   folderType: 'all' | 'archived' | 'saved' | 'folder';
   foldersDispatch: FolderEditDispatch;
@@ -31,7 +32,7 @@ type StateProps = {
 const ICON_SIZE = 96;
 
 const EmptyFolder: FC<OwnProps & StateProps> = ({
-  chatFolder, animatedEmoji, foldersDispatch,
+  chatFolder, animatedEmoji, foldersDispatch, isPeople,
 }) => {
   const { openSettingsScreen } = getActions();
   const lang = useOldLang();
@@ -47,9 +48,11 @@ const EmptyFolder: FC<OwnProps & StateProps> = ({
       <div className={styles.sticker}>
         {animatedEmoji && <AnimatedIconFromSticker sticker={animatedEmoji} size={ICON_SIZE} />}
       </div>
-      <h3 className={styles.title} dir="auto">{lang('FilterNoChatsToDisplay')}</h3>
+      <h3 className={styles.title} dir="auto">
+        {lang(isPeople ? 'FilterPeopleEmptyTitle' : 'FilterNoChatsToDisplay')}
+      </h3>
       <p className={styles.description} dir="auto">
-        {lang(chatFolder ? 'ChatList.EmptyChatListFilterText' : 'Chat.EmptyChat')}
+        {lang(isPeople ? 'FilterPeopleEmptyText' : chatFolder ? 'ChatList.EmptyChatListFilterText' : 'Chat.EmptyChat')}
       </p>
       {chatFolder && (
         <Button

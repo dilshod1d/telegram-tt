@@ -9,7 +9,8 @@ import type { GlobalState } from '../global/types';
 import type { CallbackManager } from './callbacks';
 
 import {
-  ALL_FOLDER_ID, ARCHIVED_FOLDER_ID, DEBUG, SAVED_FOLDER_ID, SERVICE_NOTIFICATIONS_USER_ID,
+  ALL_FOLDER_ID, ARCHIVED_FOLDER_ID, DEBUG, PEOPLE_FOLDER_ID, SAVED_FOLDER_ID,
+  SERVICE_NOTIFICATIONS_USER_ID,
 } from '../config';
 import { getIsChatMuted } from '../global/helpers/notifications';
 import {
@@ -21,6 +22,7 @@ import {
 import arePropsShallowEqual from './arePropsShallowEqual';
 import { createCallbackManager } from './callbacks';
 import { areSortedArraysEqual, unique } from './iteratees';
+import { isPeopleUser } from './peopleCategory';
 import { throttle } from './schedulers';
 
 interface FolderSummary {
@@ -54,6 +56,7 @@ interface ChatSummary {
   orderInSaved: number;
   isUserBot?: boolean;
   isUserContact?: boolean;
+  isPerson?: boolean;
 }
 
 const UPDATE_THROTTLE = 500;
@@ -139,6 +142,11 @@ export function init() {
 
 export function getOrderedIds(folderId: number) {
   if (!inited) init();
+
+  if (folderId === PEOPLE_FOLDER_ID && !prevGlobal.isAllFolderFullyLoaded
+    && !results.orderedIdsByFolderId[folderId]?.length) {
+    return undefined;
+  }
 
   return results.orderedIdsByFolderId[folderId];
 }
@@ -322,6 +330,11 @@ function updateFullyLoaded(
     affectedFolderIds = affectedFolderIds.concat(emptyFolderIds);
   }
 
+  if (isAllFolderFullyLoaded) affectedFolderIds.push(PEOPLE_FOLDER_ID);
+  if (isAllFolderFullyLoaded !== prevGlobal.isAllFolderFullyLoaded) {
+    delete results.orderedIdsByFolderId[PEOPLE_FOLDER_ID];
+  }
+
   prevGlobal.isAllFolderFullyLoaded = isAllFolderFullyLoaded;
   prevGlobal.isArchivedFolderFullyLoaded = isArchivedFolderFullyLoaded;
   prevGlobal.isSavedFolderFullyLoaded = isSavedFolderFullyLoaded;
@@ -345,6 +358,10 @@ function updateFolders(
     prepared.folderSummariesById[ALL_FOLDER_ID] = buildFolderSummaryFromMainList(
       ALL_FOLDER_ID, newListIds, newPinnedIds,
     );
+    prepared.folderSummariesById[PEOPLE_FOLDER_ID] = buildFolderSummaryFromMainList(
+      PEOPLE_FOLDER_ID, newListIds, newPinnedIds,
+    );
+    prepared.chatIdsByFolderId[PEOPLE_FOLDER_ID] ||= new Set();
 
     prevGlobal.allFolderListIds = newListIds;
     prevGlobal.allFolderPinnedIds = newPinnedIds;
@@ -566,6 +583,7 @@ function buildChatSummary<T extends GlobalState>(
     unreadMentionsCount,
     isUserBot: userInfo ? userInfo.type === 'userTypeBot' : undefined,
     isUserContact: userInfo ? userInfo.isContact : undefined,
+    isPerson: isPeopleUser(userInfo || undefined, global.currentUserId),
     orderInAll,
     orderInSaved,
   };
@@ -591,6 +609,10 @@ function isChatInFolder(
   }
 
   const { id: chatId, type } = chatSummary;
+
+  if (folderSummary.id === PEOPLE_FOLDER_ID) {
+    return Boolean(chatSummary.isPerson && !chatSummary.isArchived && folderSummary.listIds?.has(chatId));
+  }
 
   if (folderSummary.listIds) {
     if (

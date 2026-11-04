@@ -332,10 +332,10 @@ addActionHandler('apiUpdate', (global, actions, update): ActionReturnType => {
 
       Object.values(global.byTabId).forEach(({ id: tabId }) => {
         const tabState = selectTabState(global, tabId);
-        const isFolderActive = Object.values(chatFoldersById)[tabState.activeChatFolder - 1]?.id === id;
+        const isFolderActive = (tabState.activeChatFolderId ?? orderedIds?.[tabState.activeChatFolder]) === id;
 
-        if (isFolderActive) {
-          global = updateTabState(global, { activeChatFolder: 0 }, tabId);
+        if (isDeleted && isFolderActive) {
+          global = updateTabState(global, { activeChatFolder: 0, activeChatFolderId: undefined }, tabId);
         }
       });
 

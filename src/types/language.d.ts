@@ -936,6 +936,9 @@ export interface LangPair {
   'Chats': undefined;
   'FilterBots': undefined;
   'FilterContacts': undefined;
+  'FilterPeople': undefined;
+  'FilterPeopleEmptyTitle': undefined;
+  'FilterPeopleEmptyText': undefined;
   'FilterNonContacts': undefined;
   'FromYou': undefined;
   'InDlgAlbum': undefined;

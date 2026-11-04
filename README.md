@@ -24,6 +24,24 @@ Obtain API ID and API hash on [my.telegram.org](https://my.telegram.org) and pop
 npm run dev
 ```
 
+### Offline People validation
+
+With the pinned dependencies installed and a supported Node version:
+
+```sh
+npm run test:people
+PLAYWRIGHT_CHROME_CHANNEL=chrome npm run test:people:ui
+npm run dev:mocked -- --host 127.0.0.1
+```
+
+The browser suite uses an installed Chrome, isolated browser contexts and its own
+loopback mock server. Omit `PLAYWRIGHT_CHROME_CHANNEL` when using Playwright's
+matching Chromium installation. The mock server requires no API credentials;
+its transport is replaced locally and its CSP restricts network connections to
+the same origin. Open `http://127.0.0.1:1235/#?mockScenario=people` to inspect the
+fixture. Other scenarios are `people-folders`, `people-paged` and `people-empty`.
+The focused UI suite covers desktop light/dark and a narrow touch viewport.
+
 ### Invoking API from console
 
 Start your dev server and locate GramJS worker in console context.

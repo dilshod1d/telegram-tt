@@ -146,6 +146,7 @@ export type TabState = {
   };
 
   activeChatFolder: number;
+  activeChatFolderId?: number;
   tabThreads: Record<string, Record<ThreadId, TabThread>>;
   forumPanelChatId?: string;
 

@@ -50,7 +50,8 @@ export function buildApiInputPrivacyRules(global: GlobalState, {
 }
 
 export function getCurrentMaxAccountCount() {
-  const limit = getGlobal().appConfig?.limits?.moreAccounts || DEFAULT_LIMITS.moreAccounts;
+  const global = getGlobal();
+  const limit = global.appConfig?.limits?.moreAccounts || DEFAULT_LIMITS.moreAccounts;
   const accounts = getAccountsInfo();
   const premiumCount = Object.values(accounts).filter((account) => account.isPremium).length;
   // Each premium account increases the base limit by 1, up to the maximum limit.

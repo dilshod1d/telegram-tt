@@ -16,6 +16,7 @@ import {
   CHAT_HEIGHT_PX,
   CHAT_LIST_SLICE,
   FRESH_AUTH_PERIOD,
+  PEOPLE_FOLDER_ID,
   SAVED_FOLDER_ID,
 } from '../../../config';
 import { IS_APP, IS_MAC_OS } from '../../../util/browser/windowEnvironment';
@@ -43,6 +44,7 @@ import UnconfirmedSession from './UnconfirmedSession';
 
 type OwnProps = {
   className?: string;
+  isPeople?: boolean;
   folderType: 'all' | 'archived' | 'saved' | 'folder';
   folderId?: number;
   isActive: boolean;
@@ -61,6 +63,7 @@ const RESERVED_HOTKEYS = new Set(['9', '0']);
 
 const ChatList: FC<OwnProps> = ({
   className,
+  isPeople,
   folderType,
   folderId,
   isActive,
@@ -89,10 +92,11 @@ const ChatList: FC<OwnProps> = ({
   const isAllFolder = folderType === 'all';
   const isSaved = folderType === 'saved';
   const resolvedFolderId = (
-    isAllFolder ? ALL_FOLDER_ID : isArchived ? ARCHIVED_FOLDER_ID : isSaved ? SAVED_FOLDER_ID : folderId!
+    isPeople ? PEOPLE_FOLDER_ID
+      : isAllFolder ? ALL_FOLDER_ID : isArchived ? ARCHIVED_FOLDER_ID : isSaved ? SAVED_FOLDER_ID : folderId!
   );
 
-  const shouldDisplayArchive = isAllFolder && canDisplayArchive && archiveSettings;
+  const shouldDisplayArchive = !isPeople && isAllFolder && canDisplayArchive && archiveSettings;
   const shouldShowFrozenAccountNotification = isAccountFrozen && isAllFolder;
 
   const orderedIds = useFolderManagerForOrderedIds(resolvedFolderId);
@@ -282,6 +286,7 @@ const ChatList: FC<OwnProps> = ({
       ) : viewportIds && !viewportIds.length && !isSaved ? (
         (
           <EmptyFolder
+            isPeople={isPeople}
             folderId={folderId}
             folderType={folderType}
             foldersDispatch={foldersDispatch!}

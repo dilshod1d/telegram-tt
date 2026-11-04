@@ -568,6 +568,7 @@ export default memo(withGlobal<OwnProps>(
       },
       shouldSkipHistoryAnimations,
       activeChatFolder,
+      activeChatFolderId,
       leftColumn,
       nextFoldersAction,
       storyViewer: {
@@ -593,7 +594,8 @@ export default memo(withGlobal<OwnProps>(
     return {
       searchQuery: query,
       searchDate: minDate,
-      isFirstChatFolderActive: activeChatFolder === 0,
+      isFirstChatFolderActive: activeChatFolderId !== undefined
+        ? activeChatFolderId === (global.chatFolders.orderedIds?.[0] ?? 0) : activeChatFolder === 0,
       shouldSkipHistoryAnimations,
       currentUserId,
       hasPasscode,

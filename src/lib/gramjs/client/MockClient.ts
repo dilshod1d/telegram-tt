@@ -2,9 +2,11 @@ import BigInt from 'big-integer';
 
 import type { DownloadFileWithDcParams } from './downloadFile';
 import type { MockTypes } from './mockUtils/MockTypes';
+import { MOCK_STARTING_DATE } from './mockUtils/MockTypes';
 import type { SizeType } from './TelegramClient';
 
 import { GENERAL_TOPIC_ID } from '../../../config';
+import readFallbackStrings from '../../../util/data/readFallbackStrings';
 import { UpdateConnectionState } from '../network';
 import Api from '../tl/api';
 import createMockedAvailableReaction from './mockUtils/createMockedAvailableReaction';
@@ -65,6 +67,7 @@ class TelegramClient {
     }
 
     async loadScenario(scenario = 'default'): Promise<void> {
+        this.invokeMiddleware = undefined;
         try {
             const invokeMiddleware = await import(`./__invokeMiddlewares__/${scenario}`);
 
@@ -72,8 +75,14 @@ class TelegramClient {
         } catch (e) {
             // Ignore and use the default logic
         }
-        return import(`./__mocks__/${scenario}.json`).then(async (mockData) => {
-            this.mockData = mockData as MockTypes;
+        return import(`./__mocks__/${scenario}.json`).then(async (module) => {
+            const mockData = (module.default || module) as Partial<MockTypes>;
+            this.mockData = {
+                users: [], chats: [], channels: [], dialogFilters: [], messages: {},
+                availableReactions: [], documents: [], topPeers: [],
+                ...mockData,
+                dialogs: { active: [], archived: [], ...mockData.dialogs },
+            };
             await Promise.all(this.mockData.documents.map(async (l, i) => {
                 const response = await import(`./__data__/${l.url}`).then((module) => fetch(module.default));
                 const bytes = await response.arrayBuffer();
@@ -84,7 +93,7 @@ class TelegramClient {
             this.callbacks.forEach(({ eventBuilder, callback }) => (callback(
                 eventBuilder.build(new UpdateConnectionState(UpdateConnectionState.connected)),
             )));
-        }).catch(() => this.loadScenario());
+        });
     }
 
     fireUpdate(update: Api.TypeUpdate) {
@@ -115,8 +124,94 @@ class TelegramClient {
             }
         }
 
-        if (this.mockData.appConfig && request instanceof Api.help.GetAppConfig) {
-            return createMockedJSON(this.mockData.appConfig);
+        if (request instanceof Api.help.GetAppConfig) {
+            return new Api.help.AppConfig({ hash: 1, config: createMockedJSON(this.mockData.appConfig || {}) });
+        }
+
+        if (request instanceof Api.help.GetPeerColors) {
+            const colors = [0xcc5049, 0xd67722, 0x955cdb, 0x40a920, 0x309eba, 0x368ad1, 0xc7508b];
+            return new Api.help.PeerColors({
+                hash: 1,
+                colors: colors.map((color, colorId) => new Api.help.PeerColorOption({
+                    colorId,
+                    colors: new Api.help.PeerColorSet({ colors: [color] }),
+                    darkColors: new Api.help.PeerColorSet({ colors: [color] }),
+                })),
+            });
+        }
+
+        if (request instanceof Api.langpack.GetLangPack) {
+            const { langPack } = await readFallbackStrings();
+            return new Api.LangPackDifference({
+                langCode: 'en', fromVersion: 0, version: 1,
+                strings: Object.entries(langPack.strings).map(([key, value]) => (
+                    typeof value === 'string' ? new Api.LangPackString({ key, value })
+                        : 'isDeleted' in value ? new Api.LangPackStringDeleted({ key })
+                        : new Api.LangPackStringPluralized({ key, otherValue: value.other || '',
+                            zeroValue: value.zero, oneValue: value.one, twoValue: value.two,
+                            fewValue: value.few, manyValue: value.many })
+                )),
+            });
+        }
+
+        if (request instanceof Api.updates.GetState) {
+            return new Api.updates.State({ pts: 0, qts: 0, date: MOCK_STARTING_DATE, seq: 0, unreadCount: 0 });
+        }
+
+        if (request instanceof Api.updates.GetDifference) {
+            return new Api.updates.DifferenceEmpty({ date: MOCK_STARTING_DATE, seq: 0 });
+        }
+
+        if (request instanceof Api.messages.GetSavedDialogs) {
+            return new Api.messages.SavedDialogs({ dialogs: [], users: [], chats: [], messages: [] });
+        }
+
+        if (request instanceof Api.contacts.GetContacts) {
+            return new Api.contacts.Contacts({
+                contacts: [], savedCount: 0, users: this.getUsers().filter((user) => user.contact),
+            });
+        }
+
+        if (request instanceof Api.messages.ReadHistory) {
+            const id = getIdFromInputPeer(request.peer);
+            const dialog = [...this.mockData.dialogs.active, ...this.mockData.dialogs.archived]
+                .find((entry) => entry.id === id);
+            if (!dialog) return undefined;
+            dialog.readInboxMaxId = request.maxId || dialog.topMessage || 0;
+            dialog.unreadCount = 0;
+            this.fireUpdate(new Api.UpdateReadHistoryInbox({
+                peer: createMockedTypePeer(dialog.id, this.mockData),
+                maxId: dialog.readInboxMaxId, stillUnreadCount: 0, pts: 0, ptsCount: 0,
+            }));
+            return new Api.messages.AffectedMessages({ pts: 0, ptsCount: 0 });
+        }
+
+        if (request instanceof Api.folders.EditPeerFolders) {
+            const folderPeers: Api.FolderPeer[] = [];
+            request.folderPeers.forEach(({ peer, folderId }) => {
+                const id = getIdFromInputPeer(peer);
+                const dialog = [...this.mockData.dialogs.active, ...this.mockData.dialogs.archived]
+                    .find((entry) => entry.id === id);
+                if (!dialog) return;
+                this.mockData.dialogs.active = this.mockData.dialogs.active.filter((entry) => entry.id !== id);
+                this.mockData.dialogs.archived = this.mockData.dialogs.archived.filter((entry) => entry.id !== id);
+                this.mockData.dialogs[folderId === 1 ? 'archived' : 'active'].push(dialog);
+                folderPeers.push(new Api.FolderPeer({ peer: createMockedTypePeer(dialog.id, this.mockData), folderId }));
+            });
+            const update = new Api.UpdateFolderPeers({ folderPeers, pts: 0, ptsCount: 0 });
+            return new Api.Updates({ updates: [update], users: [], chats: [], date: 0, seq: 0 });
+        }
+
+        if (request instanceof Api.messages.ToggleDialogPin) {
+            const id = getIdFromInputPeer((request.peer as Api.InputDialogPeer).peer);
+            const dialog = this.mockData.dialogs.active.find((entry) => entry.id === id);
+            if (!dialog) return undefined;
+            dialog.pinned = request.pinned;
+            this.fireUpdate(new Api.UpdateDialogPinned({
+                pinned: request.pinned,
+                peer: new Api.DialogPeer({ peer: createMockedTypePeer(dialog.id, this.mockData) }),
+            }));
+            return true;
         }
 
         if (request instanceof Api.messages.GetDiscussionMessage) {
@@ -191,16 +286,20 @@ class TelegramClient {
         }
 
         if (request instanceof Api.users.GetFullUser) {
+            const user = request.id instanceof Api.InputUserSelf
+                ? this.mockData.users.find((entry) => entry.self)
+                : this.mockData.users.find((entry) => entry.id === (request.id as Api.InputUser).userId?.toString());
+            if (!user) return undefined;
             return new Api.users.UserFull({
                 fullUser: new Api.UserFull({
                     about: 'lol',
                     settings: new Api.PeerSettings({}),
                     notifySettings: new Api.PeerNotifySettings({}),
-                    id: BigInt(1),
+                    id: BigInt(user.id),
                     commonChatsCount: 0,
                 }),
                 chats: [],
-                users: [],
+                users: [this.getUser(user.id)],
             });
         }
 
@@ -236,23 +335,23 @@ class TelegramClient {
         }
 
         if (request instanceof Api.messages.GetDialogFilters) {
-            return [
+            return new Api.messages.DialogFilters({ filters: [
                 new Api.DialogFilterDefault(),
                 ...this.mockData.dialogFilters
                     .map((dialogFilter) => createMockedDialogFilter(dialogFilter.id, this.mockData)),
-            ];
+            ] });
         }
 
         if (request instanceof Api.messages.GetPinnedDialogs) {
             return new Api.messages.PeerDialogs({
-                dialogs: [],
-                chats: [],
-                messages: [],
-                users: [],
+                dialogs: this.getDialogs(request.folderId === 1 ? 'archived' : 'active').filter((dialog) => dialog.pinned),
+                chats: this.getChatsAndChannels(),
+                messages: this.getAllMessages(),
+                users: this.getUsers(),
                 state: new Api.updates.State({
                     pts: 0,
                     qts: 0,
-                    date: 0,
+                    date: MOCK_STARTING_DATE,
                     seq: 0,
                     unreadCount: 0,
                 }),
@@ -260,17 +359,15 @@ class TelegramClient {
         }
 
         if (request instanceof Api.messages.GetDialogs) {
-            if (request.folderId || !(request.offsetPeer instanceof Api.InputPeerEmpty)) {
-                return new Api.messages.Dialogs({
-                    dialogs: [],
-                    users: [],
-                    chats: [],
-                    messages: [],
-                });
-            }
-
-            return new Api.messages.Dialogs({
-                dialogs: this.getDialogs(),
+            const allDialogs = this.getDialogs(request.folderId === 1 ? 'archived' : 'active');
+            const dialogs = allDialogs.filter((dialog) => !request.excludePinned || !dialog.pinned);
+            const offsetId = getIdFromInputPeer(request.offsetPeer);
+            const offset = offsetId ? dialogs.findIndex((dialog) => (
+                getIdFromInputPeer(dialog.peer) === offsetId
+            )) + 1 : 0;
+            return new Api.messages.DialogsSlice({
+                count: allDialogs.length,
+                dialogs: dialogs.slice(offset, offset + request.limit),
                 messages: this.getAllMessages(),
                 chats: this.getChatsAndChannels(),
                 users: this.getUsers(),
@@ -411,6 +508,12 @@ class TelegramClient {
 
     public setShouldDebugExportedSenders() {}
 
+    public setIsPremium() {}
+
+    public async destroy() {}
+
+    public async disconnect() {}
+
     public isConnected() {
         return true;
     }
@@ -418,7 +521,7 @@ class TelegramClient {
     public releaseExportedSender() {}
 
     private getMessagesFrom(chatId: string) {
-        return this.mockData.messages[chatId].map((message) => createMockedMessage(chatId, message.id, this.mockData));
+        return (this.mockData.messages[chatId] || []).map((message) => createMockedMessage(chatId, message.id, this.mockData));
     }
 
     private getAllMessages() {

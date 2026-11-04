@@ -4,7 +4,8 @@ node_modules
 .env
 src/lib/gramjs/build/
 build-contest/
-tests/
+test-results/
+playwright-report/
 .idea
 *.iml
 dev/perf/screenshot*
