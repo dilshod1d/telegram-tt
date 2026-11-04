@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const createPRComment = require('./createPRComment');
-const template = require('../.github/workflows/statoscope-comment');
+const template = require('./statoscopeCommentTemplate');
 
 module.exports = async ({ github, context }) => {
   const data = JSON.parse(fs.readFileSync('result.json', 'utf8'));

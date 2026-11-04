@@ -30,6 +30,7 @@ module.exports = {
         if(!context.getPhysicalFilename().substring(context.getCwd().length).startsWith('/src/global')) return;
         if(node.callee.name === 'getGlobal'
             && node.parent.type !== 'AssignmentExpression'
+            && !(node.parent.type === 'VariableDeclarator' && node.parent.id.name === 'global')
         ) {
           context.report({
             node,
