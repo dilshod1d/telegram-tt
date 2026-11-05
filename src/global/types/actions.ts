@@ -1687,7 +1687,9 @@ export interface ActionPayloads {
 
   // Downloads
   downloadSelectedMessages: WithTabId | undefined;
+  resolveApkDownloadWarning: { shouldDownload: boolean } & WithTabId;
   downloadMedia: {
+    isApkConfirmed?: boolean;
     media: DownloadableMedia;
     originMessage?: ApiMessage;
   } & WithTabId;

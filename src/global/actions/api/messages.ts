@@ -51,6 +51,7 @@ import {
 import { getMessageKey, isLocalMessageId } from '../../../util/keys/messageKey';
 import { getTranslationFn, type RegularLangFnParameters } from '../../../util/localization';
 import { formatStarsAsText } from '../../../util/localization/format';
+import { getLinkRisk } from '../../../util/localSafety';
 import { oldTranslate } from '../../../util/oldLangProvider';
 import { debounce, onTickEnd, rafPromise } from '../../../util/schedulers';
 import { callApi, cancelApiProgress } from '../../../api/gramjs';
@@ -2043,6 +2044,11 @@ addActionHandler('openUrl', (global, actions, payload): ActionReturnType => {
   const urlWithProtocol = ensureProtocol(url)!;
   const parsedUrl = new URL(urlWithProtocol);
   const isMixedScript = isMixedScriptUrl(urlWithProtocol);
+
+  if (getLinkRisk(urlWithProtocol)) {
+    actions.toggleSafeLinkModal({ url: urlWithProtocol, tabId });
+    return;
+  }
 
   if (!ignoreDeepLinks && isDeepLink(urlWithProtocol)) {
     actions.closeStoryViewer({ tabId });

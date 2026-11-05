@@ -28,6 +28,8 @@
     "lang:initial": "tsx ./dev/generateInitialLangFallback.js",
     "icons:build": "fantasticon",
     "test": "cross-env APP_ENV=test jest --verbose --silent --forceExit",
+    "test:safety": "cross-env APP_ENV=test jest --runInBand src/util/localSafety.test.ts",
+    "test:safety:ui": "playwright test --config dev/playwright-safety.config.ts",
     "test:people": "cross-env APP_ENV=test jest --config dev/jest-people.config.js --runInBand",
     "test:people:ui": "playwright test --config dev/playwright-people.config.ts",
     "test:playwright": "playwright test",

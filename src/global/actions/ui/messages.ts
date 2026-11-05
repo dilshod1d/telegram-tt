@@ -17,6 +17,7 @@ import { IS_TOUCH_ENV } from '../../../util/browser/windowEnvironment';
 import { copyHtmlToClipboard } from '../../../util/clipboard';
 import { getCurrentTabId } from '../../../util/establishMultitabRole';
 import { compact, findLast } from '../../../util/iteratees';
+import { isApkFile } from '../../../util/localSafety';
 import * as langProvider from '../../../util/oldLangProvider';
 import { oldTranslate } from '../../../util/oldLangProvider';
 import parseHtmlAsFormattedText from '../../../util/parseHtmlAsFormattedText';
@@ -646,10 +647,21 @@ addActionHandler('cancelMediaHashDownloads', (global, actions, payload): ActionR
 });
 
 addActionHandler('downloadMedia', (global, actions, payload): ActionReturnType => {
-  const { media, originMessage, tabId = getCurrentTabId() } = payload;
+  const {
+    media, originMessage, isApkConfirmed, tabId = getCurrentTabId(),
+  } = payload;
 
   const hash = getMediaHash(media, 'download');
   if (!hash) return undefined;
+
+  const mimeType = 'mimeType' in media ? media.mimeType : undefined;
+  if (!isApkConfirmed && isApkFile(getMediaFilename(media), mimeType)) {
+    const warnings = selectTabState(global, tabId).apkDownloadWarnings || [];
+    if (warnings.some((warning) => getMediaHash(warning.media, 'download') === hash)) return undefined;
+    return updateTabState(global, {
+      apkDownloadWarnings: [...warnings, { media, originMessage }],
+    }, tabId);
+  }
 
   const size = 'size' in media ? media.size : 0;
   const metadata = {
@@ -661,6 +673,18 @@ addActionHandler('downloadMedia', (global, actions, payload): ActionReturnType =
   } satisfies ActiveDownloads[string];
 
   return addActiveMediaDownload(global, hash, metadata, tabId);
+});
+
+addActionHandler('resolveApkDownloadWarning', (global, actions, payload): ActionReturnType => {
+  const { shouldDownload, tabId = getCurrentTabId() } = payload;
+  const [warning, ...rest] = selectTabState(global, tabId).apkDownloadWarnings || [];
+  if (!warning) return undefined;
+  global = updateTabState(global, { apkDownloadWarnings: rest.length ? rest : undefined }, tabId);
+  setGlobal(global);
+  if (shouldDownload) {
+    actions.downloadMedia({ ...warning, isApkConfirmed: true, tabId });
+  }
+  return undefined;
 });
 
 addActionHandler('downloadSelectedMessages', (global, actions, payload): ActionReturnType => {

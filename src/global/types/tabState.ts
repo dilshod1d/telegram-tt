@@ -88,6 +88,7 @@ import type {
 import type { WebApp, WebAppModalStateType } from '../../types/webapp';
 import type { SearchResultKey } from '../../util/keys/searchResultKey';
 import type { RegularLangFnParameters } from '../../util/localization';
+import type { DownloadableMedia } from '../helpers';
 import type { CallbackAction } from './actions';
 
 export type TabState = {
@@ -441,6 +442,7 @@ export type TabState = {
   notifications: ApiNotification[];
   dialogs: (ApiError | ApiContact)[];
 
+  apkDownloadWarnings?: { media: DownloadableMedia; originMessage?: ApiMessage }[];
   safeLinkModalUrl?: string;
   mapModal?: {
     point: ApiGeoPoint;

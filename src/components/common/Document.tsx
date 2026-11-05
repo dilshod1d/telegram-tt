@@ -13,6 +13,7 @@ import {
   getMediaTransferState,
   isDocumentVideo,
 } from '../../global/helpers';
+import { isApkFile } from '../../util/localSafety';
 import { getDocumentExtension, getDocumentHasPreview } from './helpers/documentInfo';
 
 import useFlag from '../../hooks/useFlag';
@@ -120,7 +121,7 @@ const Document = ({
   const localBlobUrl = hasPreview ? document.previewBlobUrl : undefined;
   const previewData = useMedia(getDocumentMediaHash(document, 'pictogram'), !isIntersecting);
 
-  const withMediaViewer = onMediaClick && document.innerMediaType;
+  const withMediaViewer = !isApkFile(fileName, document.mimeType) && onMediaClick && document.innerMediaType;
 
   const handleDownload = useLastCallback(() => {
     downloadMedia({ media: document, originMessage: message });
